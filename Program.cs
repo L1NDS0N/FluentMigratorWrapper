@@ -17,6 +17,215 @@ using FluentMigrator.Infrastructure;
 
 namespace FluentMigratorWrapper
 {
+    /// <summary>Supported languages for the wrapper</summary>
+    public enum Language
+    {
+        /// <summary>Portuguese (Brazil)</summary>
+        PT_BR,
+        /// <summary>English</summary>
+        EN
+    }
+
+    /// <summary>Provides translations for log messages in multiple languages</summary>
+    public static class MessageTranslator
+    {
+        private static readonly Dictionary<(Language, string), string> _translations = new()
+        {
+            // Configuration messages
+            { (Language.EN, "config_not_found"), "Configuration file '{0}' not found. Use 'fm-wrapper init'" },
+            { (Language.PT_BR, "config_not_found"), "Arquivo de configuração '{0}' não encontrado. Use 'fm-wrapper init'" },
+
+            { (Language.EN, "config_info"), "Configuration:" },
+            { (Language.PT_BR, "config_info"), "Configuração:" },
+
+            { (Language.EN, "config_file"), "File: {0}" },
+            { (Language.PT_BR, "config_file"), "Arquivo: {0}" },
+
+            { (Language.EN, "config_provider"), "Provider: {0}" },
+            { (Language.PT_BR, "config_provider"), "Provider: {0}" },
+
+            { (Language.EN, "config_namespace"), "Namespace: {0}" },
+            { (Language.PT_BR, "config_namespace"), "Namespace: {0}" },
+
+            { (Language.EN, "config_autobuild"), "AutoBuild: {0}" },
+            { (Language.PT_BR, "config_autobuild"), "AutoBuild: {0}" },
+
+            { (Language.EN, "working_dir"), "📂 Directory: {0}" },
+            { (Language.PT_BR, "working_dir"), "📂 Diretório: {0}" },
+
+            { (Language.EN, "project_file"), "📁 Project: {0}" },
+            { (Language.PT_BR, "project_file"), "📁 Projeto: {0}" },
+
+            { (Language.EN, "building"), "🔨 Building ({0})..." },
+            { (Language.PT_BR, "building"), "🔨 Compilando ({0})..." },
+
+            { (Language.EN, "build_failed"), "❌ Build failed!" },
+            { (Language.PT_BR, "build_failed"), "❌ Build falhou!" },
+
+            { (Language.EN, "build_ok"), "✅ Build OK!" },
+            { (Language.PT_BR, "build_ok"), "✅ Build OK!" },
+
+            { (Language.EN, "no_csproj"), "❌ No .csproj found!" },
+            { (Language.PT_BR, "no_csproj"), "❌ Nenhum .csproj encontrado!" },
+
+            { (Language.EN, "assembly_not_found"), "❌ Assembly not found: {0}" },
+            { (Language.PT_BR, "assembly_not_found"), "❌ Assembly não encontrado: {0}" },
+
+            { (Language.EN, "assembly_file"), "📦 Assembly: {0}" },
+            { (Language.PT_BR, "assembly_file"), "📦 Assembly: {0}" },
+
+            { (Language.EN, "searching_migrations"), "🔍 Searching for migrations..." },
+            { (Language.PT_BR, "searching_migrations"), "🔍 Buscando migrations..." },
+
+            { (Language.EN, "no_migrations"), "⚠️  No migrations found! Check:\n   - Inherit from FluentMigrator.Migration\n   - Have [Migration(version)]\n{0}" },
+            { (Language.PT_BR, "no_migrations"), "⚠️  Nenhuma migration encontrada! Verifique:\n   - Herdam de FluentMigrator.Migration\n   - Possuem [Migration(version)]\n{0}" },
+
+            { (Language.EN, "namespace_filter"), "   - Namespace: {0}" },
+            { (Language.PT_BR, "namespace_filter"), "   - Namespace: {0}" },
+
+            { (Language.EN, "migrations_found"), "✓ {0} migration(s)" },
+            { (Language.PT_BR, "migrations_found"), "✓ {0} migration(s)" },
+
+            // Command messages
+            { (Language.EN, "preview_mode"), "🔍 Preview:" },
+            { (Language.PT_BR, "preview_mode"), "🔍 Preview:" },
+
+            { (Language.EN, "running_migrations"), "▶️  Running migrations..." },
+            { (Language.PT_BR, "running_migrations"), "▶️  Executando migrations..." },
+
+            { (Language.EN, "completed"), "✅ Completed!" },
+            { (Language.PT_BR, "completed"), "✅ Concluído!" },
+
+            { (Language.EN, "migrating_up"), "▶️  Migrating up {0} step(s)..." },
+            { (Language.PT_BR, "migrating_up"), "▶️  Subindo {0} migration(s)..." },
+
+            { (Language.EN, "migrating_down"), "▼  Migrating down {0} step(s)..." },
+            { (Language.PT_BR, "migrating_down"), "▼  Descendo {0} migration(s)..." },
+
+            { (Language.EN, "rollback_to"), "⏪ Rolling back to {0}..." },
+            { (Language.PT_BR, "rollback_to"), "⏪ Rollback para {0}..." },
+
+            { (Language.EN, "rollback_invalid"), "❌ Use: fm-wrapper rollback 202412150001" },
+            { (Language.PT_BR, "rollback_invalid"), "❌ Use: fm-wrapper rollback 202412150001" },
+
+            { (Language.EN, "rollback_confirm"), "⚠️  Rollback EVERYTHING? (y/N): " },
+            { (Language.PT_BR, "rollback_confirm"), "⚠️  Rollback de TUDO? (s/N): " },
+
+            { (Language.EN, "rollback_all"), "⏪ Rolling back..." },
+            { (Language.PT_BR, "rollback_all"), "⏪ Executando rollback..." },
+
+            { (Language.EN, "cancelled"), "Cancelled." },
+            { (Language.PT_BR, "cancelled"), "Cancelado." },
+
+            { (Language.EN, "migrations_list"), "📋 Migrations:" },
+            { (Language.PT_BR, "migrations_list"), "📋 Migrations:" },
+
+            { (Language.EN, "validating"), "🔍 Validating..." },
+            { (Language.PT_BR, "validating"), "🔍 Validando..." },
+
+            { (Language.EN, "valid_versions"), "✅ All valid!" },
+            { (Language.PT_BR, "valid_versions"), "✅ Todas válidas!" },
+
+            { (Language.EN, "unknown_command"), "❌ Unknown command: {0}\n   Use 'fm-wrapper help'" },
+            { (Language.PT_BR, "unknown_command"), "❌ Comando desconhecido: {0}\n   Use 'fm-wrapper help'" },
+
+            { (Language.EN, "error"), "❌ Error: {0}" },
+            { (Language.PT_BR, "error"), "❌ Erro: {0}" },
+
+            { (Language.EN, "details"), "   Details: {0}" },
+            { (Language.PT_BR, "details"), "   Detalhes: {0}" },
+
+            // Init command
+            { (Language.EN, "init_exists"), "⚠️  '{0}' already exists!" },
+            { (Language.PT_BR, "init_exists"), "⚠️  '{0}' já existe!" },
+
+            { (Language.EN, "init_overwrite"), "   Overwrite? (y/N): " },
+            { (Language.PT_BR, "init_overwrite"), "   Sobrescrever? (s/N): " },
+
+            { (Language.EN, "init_created"), "✅ '{0}' created!" },
+            { (Language.PT_BR, "init_created"), "✅ '{0}' criado!" },
+
+            { (Language.EN, "init_next_steps"), "📝 Next steps:" },
+            { (Language.PT_BR, "init_next_steps"), "📝 Próximos passos:" },
+
+            { (Language.EN, "init_step1"), "   1. Configure connectionString" },
+            { (Language.PT_BR, "init_step1"), "   1. Configure connectionString" },
+
+            { (Language.EN, "init_step2"), "   2. Configure namespace (ex: YourApi.Migrations)" },
+            { (Language.PT_BR, "init_step2"), "   2. Configure namespace (ex: YourApi.Migrations)" },
+
+            { (Language.EN, "init_step3"), "   3. Execute: fm-wrapper migrate" },
+            { (Language.PT_BR, "init_step3"), "   3. Execute: fm-wrapper migrate" },
+
+            { (Language.EN, "connectionstring_empty"), "❌ connectionString not configured!" },
+            { (Language.PT_BR, "connectionstring_empty"), "❌ connectionString não configurada!" },
+
+            // Help messages
+            { (Language.EN, "help_title"), "FluentMigrator Wrapper v1.0.0" },
+            { (Language.PT_BR, "help_title"), "FluentMigrator Wrapper v1.0.0" },
+
+            { (Language.EN, "help_usage"), "USAGE: fm-wrapper [command] [options]" },
+            { (Language.PT_BR, "help_usage"), "USO: fm-wrapper [comando] [opções]" },
+
+            { (Language.EN, "help_commands"), "COMMANDS:" },
+            { (Language.PT_BR, "help_commands"), "COMANDOS:" },
+
+            { (Language.EN, "help_init"), "  init                  Creates fm.config.json" },
+            { (Language.PT_BR, "help_init"), "  init                  Cria fm.config.json" },
+
+            { (Language.EN, "help_migrate"), "  migrate               Applies all migrations" },
+            { (Language.PT_BR, "help_migrate"), "  migrate               Aplica todas migrations" },
+
+            { (Language.EN, "help_migrate_up"), "  migrate:up [N]        Migrate up N migrations" },
+            { (Language.PT_BR, "help_migrate_up"), "  migrate:up [N]        Sobe N migrations" },
+
+            { (Language.EN, "help_migrate_down"), "  migrate:down [N]      Migrate down N migrations" },
+            { (Language.PT_BR, "help_migrate_down"), "  migrate:down [N]      Desce N migrations" },
+
+            { (Language.EN, "help_rollback"), "  rollback [VERSION]    Rollback to version" },
+            { (Language.PT_BR, "help_rollback"), "  rollback [VERSION]    Volta para versão" },
+
+            { (Language.EN, "help_rollback_all"), "  rollback:all          Undo everything" },
+            { (Language.PT_BR, "help_rollback_all"), "  rollback:all          Desfaz tudo" },
+
+            { (Language.EN, "help_list"), "  list                  List migrations" },
+            { (Language.PT_BR, "help_list"), "  list                  Lista migrations" },
+
+            { (Language.EN, "help_validate"), "  validate              Validate versions" },
+            { (Language.PT_BR, "help_validate"), "  validate              Valida versões" },
+
+            { (Language.EN, "help_options"), "OPTIONS:" },
+            { (Language.PT_BR, "help_options"), "OPÇÕES:" },
+
+            { (Language.EN, "help_config"), "  --config FILE         Custom config" },
+            { (Language.PT_BR, "help_config"), "  --config FILE         Config customizado" },
+
+            { (Language.EN, "help_preview"), "  --preview             Preview only" },
+            { (Language.PT_BR, "help_preview"), "  --preview             Apenas visualizar" },
+
+            { (Language.EN, "help_example"), "EXAMPLE:" },
+            { (Language.PT_BR, "help_example"), "EXEMPLO:" },
+
+            { (Language.EN, "help_ex1"), "  fm-wrapper init" },
+            { (Language.PT_BR, "help_ex1"), "  fm-wrapper init" },
+
+            { (Language.EN, "help_ex2"), "  fm-wrapper migrate" },
+            { (Language.PT_BR, "help_ex2"), "  fm-wrapper migrate" },
+
+            { (Language.EN, "help_ex3"), "  fm-wrapper --config prod.json migrate" },
+            { (Language.PT_BR, "help_ex3"), "  fm-wrapper --config prod.json migrate" },
+        };
+
+        public static string Translate(Language lang, string key, params object?[] args)
+        {
+            if (_translations.TryGetValue((lang, key), out var template))
+            {
+                return args.Length > 0 ? string.Format(template, args) : template;
+            }
+            // Fallback to key if translation not found
+            return key;
+        }
+    }
 
     /// <summary>
     /// An explicit migration source that exposes only the discovered migrations to the
@@ -196,6 +405,9 @@ namespace FluentMigratorWrapper
 
         [JsonPropertyName("verbose")]
         public bool Verbose { get; set; } = false;
+
+        [JsonPropertyName("language")]
+        public string Language { get; set; } = "PT-BR";
     }
 
     // Scanner que encontra migrations SEM carregar tipos desnecessários
@@ -379,6 +591,7 @@ namespace FluentMigratorWrapper
         private static AssemblyLoadContext? _loadContext;
         // Controls verbose/debug logging after config is loaded
         private static bool _verbose;
+        private static Language _language = Language.PT_BR;  // Default to Portuguese
 
         private static void LogInfo(string message)
         {
@@ -456,51 +669,60 @@ namespace FluentMigratorWrapper
                 if (!ValidateConfig(config))
                     return 1;
 
+                // Parse language from config
+                _language = config.Language.ToUpper() switch
+                {
+                    "EN" or "ENGLISH" => Language.EN,
+                    _ => Language.PT_BR
+                };
+
                 // Enable verbose logging for later helper methods
                 _verbose = config.Verbose;
 
                 if (config.Verbose)
                 {
-                    LogInfo("Configuração:");
-                    LogDebug($"Arquivo: {configFile}");
-                    LogDebug($"Provider: {config.Provider}");
-                    LogDebug($"Namespace: {config.Namespace ?? "(todos)"}");
-                    LogDebug($"AutoBuild: {config.AutoBuild}");
+                    LogInfo(MessageTranslator.Translate(_language, "config_info"));
+                    LogDebug(MessageTranslator.Translate(_language, "config_file", configFile));
+                    LogDebug(MessageTranslator.Translate(_language, "config_provider", config.Provider));
+                    LogDebug(MessageTranslator.Translate(_language, "config_namespace", config.Namespace ?? "(all)"));
+                    LogDebug(MessageTranslator.Translate(_language, "config_autobuild", config.AutoBuild));
                     Console.WriteLine();
                 }
 
                 if (!string.IsNullOrEmpty(config.WorkingDirectory) && Directory.Exists(config.WorkingDirectory))
                 {
                     Directory.SetCurrentDirectory(config.WorkingDirectory);
-                    Console.WriteLine($"📂 Diretório: {config.WorkingDirectory}");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(MessageTranslator.Translate(_language, "working_dir", config.WorkingDirectory));
+                    Console.ResetColor();
                 }
 
                 var projectFile = GetProjectFile(config);
                 if (projectFile == null)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("❌ Nenhum .csproj encontrado!");
-                    Console.ResetColor();
+                    LogError(MessageTranslator.Translate(_language, "no_csproj"));
                     return 1;
                 }
 
-                Console.WriteLine($"📁 Projeto: {Path.GetFileName(projectFile)}");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(MessageTranslator.Translate(_language, "project_file", Path.GetFileName(projectFile)));
+                Console.ResetColor();
 
                 if (config.AutoBuild)
                 {
-                    Console.WriteLine($"🔨 Compilando ({config.BuildConfiguration})...");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(MessageTranslator.Translate(_language, "building", config.BuildConfiguration));
+                    Console.ResetColor();
 
                     var buildResult = BuildProject(projectFile, config.BuildConfiguration);
                     if (buildResult != 0)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("❌ Build falhou!");
-                        Console.ResetColor();
+                        LogError(MessageTranslator.Translate(_language, "build_failed"));
                         return buildResult;
                     }
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ Build OK!");
+                    Console.WriteLine(MessageTranslator.Translate(_language, "build_ok"));
                     Console.ResetColor();
                     Console.WriteLine();
                 }
@@ -509,17 +731,20 @@ namespace FluentMigratorWrapper
 
                 if (!File.Exists(assemblyPath))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"❌ Assembly não encontrado: {assemblyPath}");
-                    Console.ResetColor();
+                    LogError(MessageTranslator.Translate(_language, "assembly_not_found", assemblyPath));
                     return 1;
                 }
 
-                Console.WriteLine($"📦 Assembly: {Path.GetFileName(assemblyPath)}");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(MessageTranslator.Translate(_language, "assembly_file", Path.GetFileName(assemblyPath)));
+                Console.ResetColor();
 
                 var assembly = LoadAssemblyWithDependencies(assemblyPath);
 
-                Console.WriteLine("🔍 Buscando migrations...");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(MessageTranslator.Translate(_language, "searching_migrations"));
+                Console.ResetColor();
+
                 var migrationTypes = MigrationAssemblyScanner.GetMigrationTypes(
                     assembly,
                     config.Namespace,
@@ -529,21 +754,15 @@ namespace FluentMigratorWrapper
 
                 if (migrationTypes.Length == 0)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("⚠️  Nenhuma migration encontrada!");
-                    Console.WriteLine("   Verifique:");
-                    Console.WriteLine("   - Herdam de FluentMigrator.Migration");
-                    Console.WriteLine("   - Possuem [Migration(version)]");
-                    if (!string.IsNullOrEmpty(config.Namespace))
-                    {
-                        Console.WriteLine($"   - Namespace: {config.Namespace}");
-                    }
-                    Console.ResetColor();
+                    var nsFilter = !string.IsNullOrEmpty(config.Namespace) 
+                        ? "\n" + MessageTranslator.Translate(_language, "namespace_filter", config.Namespace)
+                        : "";
+                    LogWarn(MessageTranslator.Translate(_language, "no_migrations", nsFilter));
                     return 1;
                 }
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"✓ {migrationTypes.Length} migration(s)");
+                Console.WriteLine(MessageTranslator.Translate(_language, "migrations_found", migrationTypes.Length));
                 Console.ResetColor();
 
                 if (config.Verbose)
@@ -567,13 +786,13 @@ namespace FluentMigratorWrapper
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"❌ Erro: {ex.Message}");
+                LogError(MessageTranslator.Translate(_language, "error", ex.Message));
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"   Detalhes: {ex.InnerException.Message}");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(MessageTranslator.Translate(_language, "details", ex.InnerException.Message));
+                    Console.ResetColor();
                 }
-                Console.ResetColor();
 
                 #if DEBUG
                 Console.WriteLine();
@@ -616,14 +835,15 @@ namespace FluentMigratorWrapper
             if (File.Exists(DefaultConfigFile))
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️  '{DefaultConfigFile}' já existe!");
-                Console.Write("   Sobrescrever? (s/N): ");
+                Console.WriteLine(MessageTranslator.Translate(_language, "init_exists", DefaultConfigFile));
+                Console.Write(MessageTranslator.Translate(_language, "init_overwrite"));
                 var response = Console.ReadLine()?.ToLower();
                 Console.ResetColor();
 
-                if (response != "s" && response != "sim")
+                var confirm = _language == Language.EN ? (response == "y" || response == "yes") : (response == "s" || response == "sim");
+                if (!confirm)
                 {
-                    Console.WriteLine("Cancelado.");
+                    Console.WriteLine(MessageTranslator.Translate(_language, "cancelled"));
                     return;
                 }
             }
@@ -637,7 +857,8 @@ namespace FluentMigratorWrapper
                 Namespace = "YourApi.Migrations",
                 MigrationsFolder = "Migrations",
                 ShowSql = true,
-                Verbose = false
+                Verbose = false,
+                Language = _language == Language.EN ? "EN" : "PT-BR"
             };
 
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions
@@ -649,39 +870,43 @@ namespace FluentMigratorWrapper
             File.WriteAllText(DefaultConfigFile, json);
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"✅ '{DefaultConfigFile}' criado!");
+            Console.WriteLine(MessageTranslator.Translate(_language, "init_created", DefaultConfigFile));
             Console.ResetColor();
             Console.WriteLine();
-            Console.WriteLine("📝 Próximos passos:");
-            Console.WriteLine("   1. Configure connectionString");
-            Console.WriteLine("   2. Configure namespace (ex: YourApi.Migrations)");
-            Console.WriteLine("   3. Execute: fm-wrapper migrate");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(MessageTranslator.Translate(_language, "init_next_steps"));
+            Console.ResetColor();
+            Console.WriteLine(MessageTranslator.Translate(_language, "init_step1"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "init_step2"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "init_step3"));
         }
 
         private static void ShowHelp()
         {
-            Console.WriteLine("FluentMigrator Wrapper v1.0.0");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_title"));
             Console.WriteLine();
-            Console.WriteLine("USO: fm-wrapper [comando] [opções]");
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_usage"));
             Console.WriteLine();
-            Console.WriteLine("COMANDOS:");
-            Console.WriteLine("  init                  Cria fm.config.json");
-            Console.WriteLine("  migrate               Aplica todas migrations");
-            Console.WriteLine("  migrate:up [N]        Sobe N migrations");
-            Console.WriteLine("  migrate:down [N]      Desce N migrations");
-            Console.WriteLine("  rollback [VERSION]    Volta para versão");
-            Console.WriteLine("  rollback:all          Desfaz tudo");
-            Console.WriteLine("  list                  Lista migrations");
-            Console.WriteLine("  validate              Valida versões");
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_commands"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_init"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_migrate"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_migrate_up"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_migrate_down"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_rollback"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_rollback_all"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_list"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_validate"));
             Console.WriteLine();
-            Console.WriteLine("OPÇÕES:");
-            Console.WriteLine("  --config FILE         Config customizado");
-            Console.WriteLine("  --preview             Apenas visualizar");
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_options"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_config"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_preview"));
             Console.WriteLine();
-            Console.WriteLine("EXEMPLO:");
-            Console.WriteLine("  fm-wrapper init");
-            Console.WriteLine("  fm-wrapper migrate");
-            Console.WriteLine("  fm-wrapper --config prod.json migrate");
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_example"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_ex1"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_ex2"));
+            Console.WriteLine(MessageTranslator.Translate(_language, "help_ex3"));
+            Console.ResetColor();
         }
 
         private static void ShowVersion()
@@ -693,9 +918,7 @@ namespace FluentMigratorWrapper
         {
             if (string.IsNullOrEmpty(config.ConnectionString))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("❌ connectionString não configurada!");
-                Console.ResetColor();
+                LogError(MessageTranslator.Translate(_language, "connectionstring_empty"));
                 return false;
             }
 
@@ -851,89 +1074,102 @@ namespace FluentMigratorWrapper
                     case "migrate":
                         if (preview)
                         {
-                            Console.WriteLine("🔍 Preview:");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(MessageTranslator.Translate(_language, "preview_mode"));
+                            Console.ResetColor();
                             runner.ListMigrations();
                         }
                         else
                         {
-                            Console.WriteLine("▶️  Executando migrations...");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(MessageTranslator.Translate(_language, "running_migrations"));
+                            Console.ResetColor();
                             runner.MigrateUp();
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("✅ Concluído!");
+                            Console.WriteLine(MessageTranslator.Translate(_language, "completed"));
                             Console.ResetColor();
                         }
                         break;
 
                     case "migrate:up":
                         var stepsUp = args.Length > 0 && int.TryParse(args[0], out var s) ? s : 1;
-                        Console.WriteLine($"▶️  Subindo {stepsUp} migration(s)...");
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(MessageTranslator.Translate(_language, "migrating_up", stepsUp));
+                        Console.ResetColor();
                         runner.MigrateUp(stepsUp);
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("✅ Concluído!");
+                        Console.WriteLine(MessageTranslator.Translate(_language, "completed"));
                         Console.ResetColor();
                         break;
 
                     case "migrate:down":
                         var stepsDown = args.Length > 0 && int.TryParse(args[0], out s) ? s : 1;
-                        Console.WriteLine($"▼  Descendo {stepsDown} migration(s)...");
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(MessageTranslator.Translate(_language, "migrating_down", stepsDown));
+                        Console.ResetColor();
                         runner.MigrateDown(stepsDown);
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("✅ Concluído!");
+                        Console.WriteLine(MessageTranslator.Translate(_language, "completed"));
                         Console.ResetColor();
                         break;
 
                     case "rollback":
                         if (args.Length == 0 || !long.TryParse(args[0], out var version))
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("❌ Use: fm-wrapper rollback 202412150001");
-                            Console.ResetColor();
+                            LogError(MessageTranslator.Translate(_language, "rollback_invalid"));
                             return 1;
                         }
-                        Console.WriteLine($"⏪ Rollback para {version}...");
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(MessageTranslator.Translate(_language, "rollback_to", version));
+                        Console.ResetColor();
                         runner.RollbackToVersion(version);
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("✅ Concluído!");
+                        Console.WriteLine(MessageTranslator.Translate(_language, "completed"));
                         Console.ResetColor();
                         break;
 
                     case "rollback:all":
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.Write("⚠️  Rollback de TUDO? (s/N): ");
+                        Console.Write(MessageTranslator.Translate(_language, "rollback_confirm"));
                         Console.ResetColor();
-                        if (Console.ReadLine()?.ToLower() == "s")
+                        var response = Console.ReadLine()?.ToLower();
+                        var confirm = _language == Language.EN ? response == "y" : response == "s";
+                        if (confirm)
                         {
-                            Console.WriteLine("⏪ Executando rollback...");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(MessageTranslator.Translate(_language, "rollback_all"));
+                            Console.ResetColor();
                             runner.Rollback(int.MaxValue);
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("✅ Concluído!");
+                            Console.WriteLine(MessageTranslator.Translate(_language, "completed"));
                             Console.ResetColor();
                         }
                         else
                         {
-                            Console.WriteLine("Cancelado.");
+                            Console.WriteLine(MessageTranslator.Translate(_language, "cancelled"));
                         }
                         break;
 
                     case "list":
-                        Console.WriteLine("📋 Migrations:");
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(MessageTranslator.Translate(_language, "migrations_list"));
+                        Console.ResetColor();
                         Console.WriteLine();
                         runner.ListMigrations();
                         break;
 
                     case "validate":
-                        Console.WriteLine("🔍 Validando...");
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(MessageTranslator.Translate(_language, "validating"));
+                        Console.ResetColor();
                         runner.ValidateVersionOrder();
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("✅ Todas válidas!");
+                        Console.WriteLine(MessageTranslator.Translate(_language, "valid_versions"));
                         Console.ResetColor();
                         break;
 
                     default:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"❌ Comando desconhecido: {command}");
-                        Console.WriteLine("   Use 'fm-wrapper help'");
-                        Console.ResetColor();
+                        LogError(MessageTranslator.Translate(_language, "unknown_command", command));
                         return 1;
                 }
 
@@ -941,13 +1177,13 @@ namespace FluentMigratorWrapper
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"❌ Erro: {ex.Message}");
+                LogError(MessageTranslator.Translate(_language, "error", ex.Message));
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"   {ex.InnerException.Message}");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(MessageTranslator.Translate(_language, "details", ex.InnerException.Message));
+                    Console.ResetColor();
                 }
-                Console.ResetColor();
                 return 1;
             }
         }
