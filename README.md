@@ -8,88 +8,171 @@
 
 ### Overview
 
-**FluentMigrator Wrapper** is a simple tool to execute FluentMigrator migrations from a .NET project. It compiles the project (optional), loads only discovered migration types, and executes FluentMigrator commands (migrate, rollback, list, validate, etc.).
+**FluentMigrator Wrapper** is a CLI tool to streamline database migrations using FluentMigrator in .NET projects. It automates project compilation, discovers migration types, and provides a clean interface for executing migration commands with support for multiple databases, scaffolding, and advanced features.
 
-**Goal**: minimize unnecessary reflection, improve logging, and facilitate use as a \dotnet tool\.
+**Key Features**:
+- Automatic project build (optional)
+- Multiple database providers (SQL Server, PostgreSQL, MySQL, SQLite, Oracle)
+- Migration scaffolding from existing databases
+- Tag-based migration execution
+- Profile support for environment-specific configurations
+- Transaction modes (Session or Transaction)
+- Verbose logging and SQL preview
+- Bilingual support (English & Portuguese)
 
 ### Requirements
 
-- .NET 8 SDK
-- \FluentMigrator.Runner\ referenced in the project containing migrations (typically via NuGet)
+- .NET 8 SDK or later
+- `FluentMigrator.Runner` NuGet package in your project
 
-### Installation (from source)
+### Installation
 
-1. Restore and build:
+**From Source:**
 
-\\\powershell
+```powershell
 dotnet restore
 dotnet build -c Release
-\\\
-
-2. Pack and install as a tool (globally or locally):
-
-\\\powershell
 dotnet pack -c Release
 dotnet tool install --global --add-source ./bin/Release FluentMigratorWrapper
-\\\
+```
 
-This creates the \m-wrapper\ command available globally (or use \dotnet tool install --local\ for per-solution installation).
+This installs `fm-wrapper` globally. For local (per-solution) installation, use `--local` flag instead of `--global`.
 
-Alternatively, run with \dotnet run --project . -- [command]\ during development.
+**During Development:**
+
+```powershell
+dotnet run --project . -- [command] [options]
+```
 
 ### Configuration
 
-The default configuration file is \m.config.json\ in the directory where the command is executed. Example \m.config.json\:
+Create `fm.config.json` in your project root (or specify a custom path with `--config`):
 
-\\\json
+```json
 {
-  ""connectionString"": ""Server=localhost;Database=MyDatabase;User Id=sa;Password=MyPassword123;TrustServerCertificate=True;"",
-  ""provider"": ""SqlServer"",
-  ""autoBuild"": true,
-  ""buildConfiguration"": ""Debug"",
-  ""nestedNamespaces"": false,
-  ""transactionMode"": ""Session"",
-  ""commandTimeout"": 30,
-  ""allowBreakingChange"": false,
-  ""previewOnly"": false,
-  ""showSql"": true,
-  ""showElapsedTime"": true,
-  ""migrationsFolder"": ""Migrations"",
-  ""language"": ""EN""
+  "connectionString": "Server=localhost;Database=MyDatabase;User Id=sa;Password=MyPassword123;TrustServerCertificate=True;",
+  "provider": "SqlServer",
+  "autoBuild": true,
+  "buildConfiguration": "Debug",
+  "namespace": "YourProject.Migrations",
+  "nestedNamespaces": false,
+  "transactionMode": "Session",
+  "commandTimeout": 30,
+  "allowBreakingChange": false,
+  "showSql": true,
+  "showElapsedTime": true,
+  "migrationsFolder": "Migrations",
+  "defaultSchema": "dbo",
+  "verbose": false,
+  "language": "EN"
 }
-\\\
+```
 
-**Main fields**:
-- \connectionString\ (required): database connection string.
-- \provider\: one of \SqlServer\, \PostgreSQL\, \MySql\, \SQLite\, \Oracle\ (case-insensitive).
-- \utoBuild\: if \	rue\, executes \dotnet build\ before loading the assembly.
-- \uildConfiguration\: \Debug\ or \Release\.
-- \
-amespace\: (optional) filters migrations by namespace.
-- \
-estedNamespaces\: if \	rue\, includes nested namespaces when filtering.
-- \	ransactionMode\: \Session\ (default) or \Transaction\ (maps to RunnerOptions.TransactionPerSession).
-- \language\: \EN\ (English) or \PT-BR\ (Portuguese, default).
+**Configuration Fields:**
 
-### Usage / Commands
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `connectionString` | string | required | Database connection string |
+| `provider` | string | `SqlServer` | Database provider: `SqlServer`, `PostgreSQL`, `MySql`, `SQLite`, `Oracle` |
+| `autoBuild` | boolean | `true` | Run `dotnet build` before migrations |
+| `buildConfiguration` | string | `Debug` | Build configuration: `Debug` or `Release` |
+| `namespace` | string | optional | Filter migrations by namespace |
+| `nestedNamespaces` | boolean | `false` | Include nested namespaces when filtering |
+| `transactionMode` | string | `Session` | Transaction handling: `Session` or `Transaction` |
+| `commandTimeout` | int | `30` | Command timeout in seconds |
+| `allowBreakingChange` | boolean | `false` | Allow breaking changes in migrations |
+| `showSql` | boolean | `true` | Display generated SQL statements |
+| `showElapsedTime` | boolean | `true` | Show execution time |
+| `migrationsFolder` | string | `Migrations` | Migrations directory path |
+| `defaultSchema` | string | optional | Default database schema |
+| `tags` | array | optional | Tag filters for migrations |
+| `profile` | string | optional | Execution profile name |
+| `verbose` | boolean | `false` | Enable verbose logging |
+| `language` | string | `PT-BR` | UI language: `EN` or `PT-BR` |
 
-Quick examples:
+### Commands
 
-\\\powershell
+#### Initialize Configuration
+
+Create a default `fm.config.json` file:
+
+```powershell
 fm-wrapper init
-fm-wrapper list
-fm-wrapper migrate
-fm-wrapper migrate --preview
-fm-wrapper migrate:up 2
-fm-wrapper migrate:down 1
-fm-wrapper rollback 202501010001
-fm-wrapper rollback:all
-fm-wrapper validate
-\\\
+```
 
-**Useful options**:
-- \--config file.json\ — use a custom configuration file.
-- \--preview\ — force preview mode.
+#### List Migrations
+
+Display all available migrations:
+
+```powershell
+fm-wrapper list
+```
+
+#### Execute All Pending Migrations
+
+```powershell
+fm-wrapper migrate
+fm-wrapper migrate --preview    # Preview without executing
+```
+
+#### Migrate Up/Down
+
+Move forward or backward by a specific number of steps:
+
+```powershell
+fm-wrapper migrate:up 2         # Execute next 2 migrations
+fm-wrapper migrate:down 1       # Rollback last 1 migration
+```
+
+#### Rollback
+
+Rollback to a specific migration or all migrations:
+
+```powershell
+fm-wrapper rollback 202501010001  # Rollback to specific migration
+fm-wrapper rollback:all           # Rollback all migrations
+```
+
+#### Validate
+
+Check migration integrity:
+
+```powershell
+fm-wrapper validate
+```
+
+#### Scaffold Database
+
+Generate migrations from an existing database:
+
+```powershell
+fm-wrapper scaffold
+fm-wrapper scaffold --output ./Migrations --namespace "MyApp.Migrations"
+fm-wrapper scaffold --tables Users Products --schema dbo
+fm-wrapper scaffold --single-file --include-data
+```
+
+**Scaffold Options:**
+
+- `--output, -o` — Output directory (default: `Migrations`)
+- `--namespace, -n` — Generated migration namespace (default: `Migrations`)
+- `--tables, -t` — Specific tables (if omitted, all tables included)
+- `--schema, -s` — Database schema (default: `dbo`)
+- `--single-file` — Generate single migration file
+- `--include-data` — Include existing data in migrations
+
+#### Display Help
+
+```powershell
+fm-wrapper help
+fm-wrapper --help
+fm-wrapper -h
+```
+
+### Global Options
+
+- `--config file.json` — Use custom configuration file
+- `--preview` — Force preview mode (no changes applied)
 
 ---
 
@@ -97,89 +180,172 @@ fm-wrapper validate
 
 ### Visão Geral
 
-**FluentMigrator Wrapper** é uma ferramenta simples para executar migrations do FluentMigrator a partir de um projeto .NET. Ela compila o projeto (opcional), carrega apenas os tipos de migration encontrados e executa os comandos do FluentMigrator.
+**FluentMigrator Wrapper** é uma ferramenta CLI para simplificar migrações de banco de dados usando FluentMigrator em projetos .NET. Automatiza a compilação do projeto, descobre tipos de migrations e fornece uma interface limpa para executar comandos de migração com suporte a múltiplos bancos de dados, scaffolding e recursos avançados.
 
-**Objetivo**: minimizar reflexão indesejada, melhorar logs e facilitar uso como \dotnet tool\.
+**Funcionalidades Principais**:
+- Build automático do projeto (opcional)
+- Múltiplos provedores de banco de dados (SQL Server, PostgreSQL, MySQL, SQLite, Oracle)
+- Geração de migrations a partir de bancos de dados existentes (scaffolding)
+- Execução de migrations por tags
+- Suporte a perfis para configurações específicas de ambiente
+- Modos de transação (Session ou Transaction)
+- Logging verboso e visualização de SQL
+- Suporte bilíngue (Inglês & Português)
 
 ### Requisitos
 
-- .NET 8 SDK
-- \FluentMigrator.Runner\ referenciado no projeto que contém as migrations (normalmente via NuGet)
+- .NET 8 SDK ou superior
+- Pacote NuGet `FluentMigrator.Runner` no seu projeto
 
-### Instalação (a partir do código-fonte)
+### Instalação
 
-1. Restaurar e compilar:
+**A partir do código-fonte:**
 
-\\\powershell
+```powershell
 dotnet restore
 dotnet build -c Release
-\\\
-
-2. Empacotar e instalar como ferramenta (global ou local):
-
-\\\powershell
 dotnet pack -c Release
 dotnet tool install --global --add-source ./bin/Release FluentMigratorWrapper
-\\\
+```
 
-Isso cria o comando \m-wrapper\ disponível globalmente.
+Isso instala `fm-wrapper` globalmente. Para instalação local (por solução), use a flag `--local` em vez de `--global`.
 
-Alternativamente você pode executar com \dotnet run --project . -- [comando]\ durante desenvolvimento.
+**Durante o desenvolvimento:**
+
+```powershell
+dotnet run --project . -- [comando] [opções]
+```
 
 ### Configuração
 
-O arquivo de configuração padrão é \m.config.json\ no diretório onde o comando é executado. Um exemplo de \m.config.json\:
+Crie `fm.config.json` no diretório raiz do seu projeto (ou especifique um caminho customizado com `--config`):
 
-\\\json
+```json
 {
-  ""connectionString"": ""Server=localhost;Database=MyDatabase;User Id=sa;Password=MyPassword123;TrustServerCertificate=True;"",
-  ""provider"": ""SqlServer"",
-  ""autoBuild"": true,
-  ""buildConfiguration"": ""Debug"",
-  ""nestedNamespaces"": false,
-  ""transactionMode"": ""Session"",
-  ""commandTimeout"": 30,
-  ""allowBreakingChange"": false,
-  ""previewOnly"": false,
-  ""showSql"": true,
-  ""showElapsedTime"": true,
-  ""migrationsFolder"": ""Migrations"",
-  ""language"": ""PT-BR""
+  "connectionString": "Server=localhost;Database=MeuBancoDados;User Id=sa;Password=MinhaSenh@123;TrustServerCertificate=True;",
+  "provider": "SqlServer",
+  "autoBuild": true,
+  "buildConfiguration": "Debug",
+  "namespace": "SeuProjeto.Migrations",
+  "nestedNamespaces": false,
+  "transactionMode": "Session",
+  "commandTimeout": 30,
+  "allowBreakingChange": false,
+  "showSql": true,
+  "showElapsedTime": true,
+  "migrationsFolder": "Migrations",
+  "defaultSchema": "dbo",
+  "verbose": false,
+  "language": "PT-BR"
 }
-\\\
+```
 
-**Campos principais**:
-- \connectionString\ (obrigatório): string de conexão do banco.
-- \provider\: um dos \SqlServer\, \PostgreSQL\, \MySql\, \SQLite\, \Oracle\ (case-insensitive).
-- \utoBuild\: se \	rue\, tenta executar \dotnet build\ antes de carregar o assembly.
-- \uildConfiguration\: \Debug\ ou \Release\.
-- \
-amespace\: (opcional) filtra migrations por namespace.
-- \
-estedNamespaces\: se \	rue\, inclui namespaces aninhados ao filtrar.
-- \	ransactionMode\: \Session\ (padrão) ou \Transaction\.
-- \language\: \PT-BR\ (Português, padrão) ou \EN\ (English).
+**Campos de Configuração:**
 
-### Uso / Comandos
+| Campo | Tipo | Padrão | Descrição |
+|-------|------|--------|-----------|
+| `connectionString` | string | obrigatório | String de conexão do banco de dados |
+| `provider` | string | `SqlServer` | Provedor de banco: `SqlServer`, `PostgreSQL`, `MySql`, `SQLite`, `Oracle` |
+| `autoBuild` | boolean | `true` | Executa `dotnet build` antes das migrations |
+| `buildConfiguration` | string | `Debug` | Configuração de build: `Debug` ou `Release` |
+| `namespace` | string | opcional | Filtra migrations por namespace |
+| `nestedNamespaces` | boolean | `false` | Inclui namespaces aninhados ao filtrar |
+| `transactionMode` | string | `Session` | Gerenciamento de transações: `Session` ou `Transaction` |
+| `commandTimeout` | int | `30` | Timeout do comando em segundos |
+| `allowBreakingChange` | boolean | `false` | Permite mudanças disruptivas em migrations |
+| `showSql` | boolean | `true` | Exibe instruções SQL geradas |
+| `showElapsedTime` | boolean | `true` | Mostra tempo de execução |
+| `migrationsFolder` | string | `Migrations` | Caminho do diretório de migrations |
+| `defaultSchema` | string | opcional | Schema padrão do banco de dados |
+| `tags` | array | opcional | Filtros de tags para migrations |
+| `profile` | string | opcional | Nome do perfil de execução |
+| `verbose` | boolean | `false` | Ativa logging verboso |
+| `language` | string | `PT-BR` | Idioma da interface: `EN` ou `PT-BR` |
 
-Exemplos rápidos:
+### Comandos
 
-\\\powershell
+#### Inicializar Configuração
+
+Cria um arquivo padrão `fm.config.json`:
+
+```powershell
 fm-wrapper init
-fm-wrapper list
-fm-wrapper migrate
-fm-wrapper migrate --preview
-fm-wrapper migrate:up 2
-fm-wrapper migrate:down 1
-fm-wrapper rollback 202501010001
-fm-wrapper rollback:all
-fm-wrapper validate
-\\\
+```
 
-**Opções úteis**:
-- \--config file.json\ — usar um arquivo de configuração customizado.
-- \--preview\ — força preview mode.
+#### Listar Migrations
+
+Exibe todas as migrations disponíveis:
+
+```powershell
+fm-wrapper list
+```
+
+#### Executar Todas as Migrations Pendentes
+
+```powershell
+fm-wrapper migrate
+fm-wrapper migrate --preview    # Visualiza sem executar
+```
+
+#### Migrar para Cima/Baixo
+
+Avança ou retrocede por um número específico de passos:
+
+```powershell
+fm-wrapper migrate:up 2         # Executa as próximas 2 migrations
+fm-wrapper migrate:down 1       # Desfaz a última 1 migration
+```
+
+#### Reverter
+
+Reverte para uma migration específica ou todas as migrations:
+
+```powershell
+fm-wrapper rollback 202501010001  # Reverte para migration específica
+fm-wrapper rollback:all           # Reverte todas as migrations
+```
+
+#### Validar
+
+Valida a integridade das migrations:
+
+```powershell
+fm-wrapper validate
+```
+
+#### Gerar Migrations do Banco
+
+Gera migrations a partir de um banco de dados existente:
+
+```powershell
+fm-wrapper scaffold
+fm-wrapper scaffold --output ./Migrations --namespace "MeuApp.Migrations"
+fm-wrapper scaffold --tables Usuarios Produtos --schema dbo
+fm-wrapper scaffold --single-file --include-data
+```
+
+**Opções de Scaffold:**
+
+- `--output, -o` — Diretório de saída (padrão: `Migrations`)
+- `--namespace, -n` — Namespace para migrations geradas (padrão: `Migrations`)
+- `--tables, -t` — Tabelas específicas (se omitido, todas são incluídas)
+- `--schema, -s` — Schema do banco de dados (padrão: `dbo`)
+- `--single-file` — Gera uma única migration
+- `--include-data` — Inclui dados existentes nas migrations
+
+#### Exibir Ajuda
+
+```powershell
+fm-wrapper help
+fm-wrapper --help
+fm-wrapper -h
+```
+
+### Opções Globais
+
+- `--config arquivo.json` — Usar arquivo de configuração customizado
+- `--preview` — Força modo de visualização (sem aplicar mudanças)
 
 ---
 
-**Última Atualização**: 17 de Dezembro de 2025
+**Última Atualização**: 19 de Dezembro de 2025
