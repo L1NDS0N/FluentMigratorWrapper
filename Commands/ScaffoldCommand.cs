@@ -1,5 +1,7 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
 using FluentMigratorWrapper.Services.DatabaseIntrospection;
+using System.Linq;
 using FluentMigratorWrapper.Services.CodeGeneration;
 using System;
 using System.IO;
@@ -33,14 +35,30 @@ public class ScaffoldCommand
             getDefaultValue: () => "dbo");
 
         var singleFileOption = new Option<bool>(
-            aliases: new[] { "--single-file" },
-            description: "Gera uma única migration com todas as tabelas",
-            getDefaultValue: () => false);
+            new[] { "--single-file" },
+            description: "Gera uma única migration com todas as tabelas")
+        {
+            Arity = System.CommandLine.ArgumentArity.Zero
+        };
 
         var includeDataOption = new Option<bool>(
-            aliases: new[] { "--include-data" },
-            description: "Inclui dados existentes nas migrations",
-            getDefaultValue: () => false);
+            new[] { "--include-data" },
+            description: "Inclui dados existentes nas migrations")
+        {
+            Arity = System.CommandLine.ArgumentArity.Zero
+        };
+
+        var separateDataFilesOption = new Option<bool>(
+            new[] { "--separate-files", "-sd" },
+            description: "Gera arquivos de seed separados por tabela dentro de uma subpasta (ex: Migrations/seed)")
+        {
+            Arity = System.CommandLine.ArgumentArity.Zero
+        };
+
+        var seedFolderOption = new Option<string>(
+            aliases: new[] { "--seed-folder" },
+            description: "Nome da subpasta onde os arquivos de seed serão colocados (quando --separate-data-files estiver ativo)",
+            getDefaultValue: () => "seed");
 
         scaffoldCommand.AddOption(outputOption);
         scaffoldCommand.AddOption(namespaceOption);
@@ -48,14 +66,35 @@ public class ScaffoldCommand
         scaffoldCommand.AddOption(schemaOption);
         scaffoldCommand.AddOption(singleFileOption);
         scaffoldCommand.AddOption(includeDataOption);
+        scaffoldCommand.AddOption(separateDataFilesOption);
+        scaffoldCommand.AddOption(seedFolderOption);
 
-        scaffoldCommand.SetHandler(async (output, ns, tables, schema, singleFile, includeData, configFile) =>
+        var configOption = new Option<string>("--config", getDefaultValue: () => "fm.config.json");
+        scaffoldCommand.AddOption(configOption);
+
+        scaffoldCommand.SetHandler(async (InvocationContext ctx) =>
         {
-            // keep CLI handler compatibility: load config and call shared method
+            // Read raw parse results and presence of options for debugging
+            var parse = ctx.ParseResult;
+            var output = parse.GetValueForOption(outputOption);
+            var ns = parse.GetValueForOption(namespaceOption);
+            var tables = parse.GetValueForOption(tablesOption);
+            var schema = parse.GetValueForOption(schemaOption);
+            var singleFile = parse.GetValueForOption(singleFileOption);
+            var includeData = parse.GetValueForOption(includeDataOption);
+            var separateDataFiles = parse.GetValueForOption(separateDataFilesOption);
+            var seedFolder = parse.GetValueForOption(seedFolderOption);
+            var configFile = parse.GetValueForOption(configOption);
+
+            var tokenVals = parse.Tokens.Select(t => t.Value).ToArray();
+            Console.WriteLine($"[PARSE] tokens=[{string.Join(' ', tokenVals)}]");
+            Console.WriteLine($"[PARSE] hasOption single-file={tokenVals.Contains("--single-file") || tokenVals.Contains("-sd")}, include-data={tokenVals.Contains("--include-data")}, separate-files={tokenVals.Contains("--separate-files") || tokenVals.Contains("--separate-data-files") || tokenVals.Contains("-sd")}");
+            Console.WriteLine($"[PARSE] values: output={output}, namespace={ns}, schema={schema}, seedFolder={seedFolder}");
+            Console.WriteLine($"[PARSE] bools: singleFile={singleFile}, includeData={includeData}, separateDataFiles={separateDataFiles}");
+
             var cfg = FluentMigratorWrapper.Program.LoadConfig(configFile);
-            await ExecuteScaffoldAsync(output, ns, tables, schema, singleFile, includeData, cfg);
-        }, outputOption, namespaceOption, tablesOption, schemaOption, singleFileOption, includeDataOption,
-           new Option<string>("--config", getDefaultValue: () => "fm.config.json"));
+            await ExecuteScaffoldAsync(output, ns, tables, schema, singleFile, includeData, separateDataFiles, seedFolder, cfg);
+        });
 
         return scaffoldCommand;
     }
@@ -68,9 +107,18 @@ public class ScaffoldCommand
         string schema,
         bool singleFile,
         bool includeData,
+        bool separateDataFiles,
+        string seedFolder,
         MigrationConfig config)
     {
         Console.WriteLine("🔍 Iniciando scaffold do banco de dados...\n");
+
+        // Debug: show parsed flag values
+        if (string.IsNullOrEmpty(outputPath)) outputPath = "Migrations";
+        if (string.IsNullOrEmpty(namespaceName)) namespaceName = "Migrations";
+        if (string.IsNullOrEmpty(seedFolder)) seedFolder = "seed";
+        
+        Console.WriteLine($"[DEBUG] singleFile={singleFile}, includeData={includeData}, separateDataFiles={separateDataFiles}, seedFolder={seedFolder}");
 
         // Cria o introspector baseado no provider
             IDatabaseIntrospector introspector = config.Provider.ToLowerInvariant() switch
@@ -180,12 +228,34 @@ public class ScaffoldCommand
             {
                 Console.WriteLine("📊 Gerando migrations de dados...");
                 var dataTimestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-                var dataFileName = $"{dataTimestamp}_SeedData.cs";
-                var dataFilePath = Path.Combine(outputPath, dataFileName);
 
-                var dataCode = await generator.GenerateDataMigrationAsync(databaseInfo, dataTimestamp, introspector);
-                await File.WriteAllTextAsync(dataFilePath, dataCode);
-                Console.WriteLine($"✅ Dados exportados: {dataFilePath}\n");
+                if (separateDataFiles)
+                {
+                    var seedPath = Path.Combine(outputPath, seedFolder);
+                    Directory.CreateDirectory(seedPath);
+
+                    Console.WriteLine($"📝 Gerando arquivos de seed por tabela em: {seedPath}");
+
+                    foreach (var table in databaseInfo.Tables)
+                    {
+                        var ts = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                        await Task.Delay(10);
+                        var fileName = $"{ts}_Seed_{table.Name}.cs";
+                        var filePath = Path.Combine(seedPath, fileName);
+                        await generator.GenerateTableDataToFileAsync(table, ts, introspector, filePath);
+                    }
+
+                    Console.WriteLine($"\n✅ Arquivos de seed criados em: {seedPath}\n");
+                }
+                else
+                {
+                    var dataFileName = $"{dataTimestamp}_SeedData.cs";
+                    var dataFilePath = Path.Combine(outputPath, dataFileName);
+
+                    // Generate data migration using streaming to avoid high memory usage
+                    await generator.GenerateDataMigrationToFileAsync(databaseInfo, dataTimestamp, introspector, dataFilePath);
+                    Console.WriteLine($"✅ Dados exportados: {dataFilePath}\n");
+                }
             }
 
             Console.WriteLine("🎉 Scaffold concluído com sucesso!");

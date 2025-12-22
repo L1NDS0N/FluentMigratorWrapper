@@ -1,6 +1,7 @@
 using System.Text;
 using System.Data;
 using System.Linq;
+using System.IO;
 using FluentMigratorWrapper.Services.DatabaseIntrospection;
 using FluentMigratorWrapper.Services.DatabaseIntrospection.Models;
 using System;
@@ -204,32 +205,42 @@ public class FluentMigratorCodeGenerator : IMigrationGenerator
         sb.AppendLine("    public override void Up()");
         sb.AppendLine("    {");
 
-        foreach (var table in dbInfo.Tables)
-        {
-            var data = await introspector.GetTableDataAsync(table.Schema, table.Name);
-
-            if (data.Rows.Count == 0)
-                continue;
-
-            sb.AppendLine($"        // Dados da tabela {table.Name}");
-
-            foreach (DataRow row in data.Rows)
+            foreach (var table in dbInfo.Tables)
             {
-                sb.AppendLine($"        Insert.IntoTable(\"{table.Name}\")");
+                var data = await introspector.GetTableDataAsync(table.Schema, table.Name);
 
-                for (int i = 0; i < data.Columns.Count; i++)
+                if (data.Rows.Count == 0)
+                    continue;
+
+                sb.AppendLine($"        // Dados da tabela {table.Name}");
+
+                // Compact: criar um array de objetos e iterar com foreach para inserir
+                sb.AppendLine($"        var rows{table.Name} = new[]");
+                sb.AppendLine("        {");
+
+                for (int r = 0; r < data.Rows.Count; r++)
                 {
-                    var columnName = data.Columns[i].ColumnName;
-                    var value = row[i];
-                    var isLast = i == data.Columns.Count - 1;
+                    var row = data.Rows[r];
+                    var assignments = new StringBuilder();
+                    for (int i = 0; i < data.Columns.Count; i++)
+                    {
+                        var columnName = data.Columns[i].ColumnName;
+                        var value = row[i];
+                        if (i > 0) assignments.Append(", ");
+                        assignments.Append($"{columnName} = {FormatValue(value)}");
+                    }
 
-                    sb.Append($"            .Row(new {{ {columnName} = {FormatValue(value)} }})");
-                    sb.AppendLine(isLast ? ";" : "");
+                    var comma = r == data.Rows.Count - 1 ? "" : ",";
+                    sb.AppendLine($"            new {{ {assignments} }}{comma}");
                 }
 
+                sb.AppendLine("        };\n");
+                sb.AppendLine($"        foreach (var r in rows{table.Name})");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            Insert.IntoTable(\"{table.Name}\").Row(r);");
+                sb.AppendLine("        }");
                 sb.AppendLine();
             }
-        }
 
         sb.AppendLine("    }");
         sb.AppendLine();
@@ -240,6 +251,179 @@ public class FluentMigratorCodeGenerator : IMigrationGenerator
         sb.AppendLine("}");
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Gera a migration de dados diretamente em arquivo, usando leitura em streaming das linhas
+    /// para reduzir uso de memória. Escreve a migration no caminho especificado.
+    /// </summary>
+    public async Task GenerateDataMigrationToFileAsync(DatabaseInfo dbInfo, string timestamp, IDatabaseIntrospector introspector, string filePath, int chunkSize = 500)
+    {
+        // Abre writer para escrita incremental
+        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await using var sw = new StreamWriter(fs, Encoding.UTF8);
+
+        await sw.WriteLineAsync("using FluentMigrator;");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync($"namespace {_namespace};");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync($"[Migration({timestamp})]");
+        await sw.WriteLineAsync("public class SeedData : Migration");
+        await sw.WriteLineAsync("{");
+        await sw.WriteLineAsync("    public override void Up()");
+        await sw.WriteLineAsync("    {");
+
+        foreach (var table in dbInfo.Tables)
+        {
+            // Use stream API to avoid loading whole table
+            await sw.WriteLineAsync($"        // Dados da tabela {table.Name}");
+
+            var columns = table.Columns.OrderBy(c => c.ColumnId).ToArray();
+
+            var rowInChunk = 0;
+            var chunkId = 0;
+            var chunkSb = new StringBuilder();
+
+            await foreach (var values in introspector.StreamTableDataAsync(table.Schema, table.Name))
+            {
+                if (columns.Length == 0) break; // nothing to write
+
+                if (rowInChunk == 0)
+                {
+                    chunkSb.AppendLine($"        var data{table.Name}_{chunkId} = new[]");
+                    chunkSb.AppendLine("        {");
+                }
+
+                var assignments = new StringBuilder();
+                for (int i = 0; i < columns.Length; i++)
+                {
+                    var col = columns[i];
+                    var value = i < values.Length ? values[i] : null;
+                    if (i > 0) assignments.Append(", ");
+                    assignments.Append($"{col.Name} = {FormatValue(value)}");
+                }
+
+                chunkSb.AppendLine($"            new {{ {assignments} }},");
+
+                rowInChunk++;
+
+                if (rowInChunk >= chunkSize)
+                {
+                    chunkSb.AppendLine("        };\n");
+                    chunkSb.AppendLine($"        foreach (var r in data{table.Name}_{chunkId})");
+                    chunkSb.AppendLine("        {");
+                    chunkSb.AppendLine($"            Insert.IntoTable(\"{table.Name}\").Row(r);");
+                    chunkSb.AppendLine("        }\n");
+
+                    await sw.WriteAsync(chunkSb.ToString());
+                    chunkSb.Clear();
+                    rowInChunk = 0;
+                    chunkId++;
+                }
+            }
+
+            if (rowInChunk > 0)
+            {
+                chunkSb.AppendLine("        };\n");
+                chunkSb.AppendLine($"        foreach (var r in data{table.Name}_{chunkId})");
+                chunkSb.AppendLine("        {");
+                chunkSb.AppendLine($"            Insert.IntoTable(\"{table.Name}\").Row(r);");
+                chunkSb.AppendLine("        }\n");
+
+                await sw.WriteAsync(chunkSb.ToString());
+                chunkSb.Clear();
+            }
+
+            await sw.WriteLineAsync();
+        }
+
+        await sw.WriteLineAsync("    }");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync("    public override void Down()");
+        await sw.WriteLineAsync("    {");
+        await sw.WriteLineAsync("        // Opcional: implementar remoção dos dados");
+        await sw.WriteLineAsync("    }");
+        await sw.WriteLineAsync("}");
+
+        await sw.FlushAsync();
+    }
+
+    public async Task GenerateTableDataToFileAsync(TableInfo table, string timestamp, IDatabaseIntrospector introspector, string filePath, int chunkSize = 500)
+    {
+        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await using var sw = new StreamWriter(fs, Encoding.UTF8);
+
+        await sw.WriteLineAsync("using FluentMigrator;");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync($"namespace {_namespace};");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync($"[Migration({timestamp})]");
+        await sw.WriteLineAsync($"public class Seed_{table.Name} : Migration");
+        await sw.WriteLineAsync("{");
+        await sw.WriteLineAsync("    public override void Up()");
+        await sw.WriteLineAsync("    {");
+
+        await sw.WriteLineAsync($"        // Dados da tabela {table.Name}");
+
+        var columns = table.Columns.OrderBy(c => c.ColumnId).ToArray();
+        var rowIndex = 0;
+        var chunkSb = new StringBuilder();
+
+        var chunkRowCount = 0;
+        await foreach (var values in introspector.StreamTableDataAsync(table.Schema, table.Name))
+        {
+            if (columns.Length == 0) break;
+
+            if (chunkRowCount == 0)
+            {
+                chunkSb.Append($"        Insert.IntoTable(\"{table.Name}\")");
+                chunkSb.AppendLine();
+            }
+
+            var assignments = new StringBuilder();
+            for (int i = 0; i < columns.Length; i++)
+            {
+                var col = columns[i];
+                var value = i < values.Length ? values[i] : null;
+                if (i > 0) assignments.Append(", ");
+                assignments.Append($"{col.Name} = {FormatValue(value)}");
+            }
+
+            chunkSb.AppendLine($"            .Row(new {{ {assignments} }})" );
+            chunkSb.AppendLine();
+            rowIndex++;
+            chunkRowCount++;
+
+            if (rowIndex % chunkSize == 0)
+            {
+                var txt = chunkSb.ToString().TrimEnd();
+                if (!txt.EndsWith(";")) txt += ";";
+                txt += Environment.NewLine + Environment.NewLine;
+                await sw.WriteAsync(txt);
+                chunkSb.Clear();
+                chunkRowCount = 0;
+            }
+        }
+
+        if (chunkSb.Length > 0)
+        {
+            var txt = chunkSb.ToString().TrimEnd();
+            if (!txt.EndsWith(";")) txt += ";";
+            txt += Environment.NewLine + Environment.NewLine;
+            await sw.WriteAsync(txt);
+            chunkSb.Clear();
+        }
+
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync("    }");
+        await sw.WriteLineAsync();
+        await sw.WriteLineAsync("    public override void Down()");
+        await sw.WriteLineAsync("    {");
+        await sw.WriteLineAsync("        // Opcional: implementar remoção dos dados");
+        await sw.WriteLineAsync("    }");
+        await sw.WriteLineAsync("}");
+
+        await sw.FlushAsync();
     }
 
     private string GenerateColumnDefinition(ColumnInfo column, bool isLast, int indent = 2)
@@ -472,9 +656,11 @@ public class FluentMigratorCodeGenerator : IMigrationGenerator
 
         return value switch
         {
-            string s => $"\"{s.Replace("\"", "\\\"")}\"",
+            string s => $"@\"{s.Replace("\"", "\"\"")}\"",
             DateTime dt => $"DateTime.Parse(\"{dt:yyyy-MM-dd HH:mm:ss}\")",
             bool b => b.ToString().ToLower(),
+            Guid g => $"Guid.Parse(\"{g}\")",
+            byte[] bytes => $"new byte[] {{ {string.Join(", ", bytes.Select(b => b.ToString()))} }}",
             _ => value.ToString() ?? "null"
         };
     }

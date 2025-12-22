@@ -175,6 +175,8 @@ Options:
 - `--schema, -s` — Database schema (default: `dbo`)
 - `--single-file` — Generate single migration file
 - `--include-data` — Include existing data in migrations
+ - `--separate-data-files` — When used with `--include-data`, generates one seed file per table instead of a single combined seed file (creates a subfolder under the output folder).
+ - `--seed-folder` — Name of the subfolder inside the `--output` folder where per-table seed files will be placed (default: `seed`).
 
 #### Display Help
 
@@ -337,6 +339,8 @@ fm-wrapper scaffold
 fm-wrapper scaffold --output ./Migrations --namespace "MeuApp.Migrations"
 fm-wrapper scaffold --tables Usuarios Produtos --schema dbo
 fm-wrapper scaffold --single-file --include-data
+fm-wrapper scaffold --include-data --separate-data-files
+fm-wrapper scaffold --include-data --separate-data-files --seed-folder seeds
 ```
 
 **Opções de Scaffold:**
@@ -347,6 +351,8 @@ fm-wrapper scaffold --single-file --include-data
 - `--schema, -s` — Schema do banco de dados (padrão: `dbo`)
 - `--single-file` — Gera uma única migration
 - `--include-data` — Inclui dados existentes nas migrations
+ - `--separate-data-files` — Quando usado com `--include-data`, gera um arquivo de seed por tabela em vez de um único arquivo (cria uma subpasta dentro do diretório de saída).
+ - `--seed-folder` — Nome da subpasta dentro de `--output` onde os arquivos de seed por tabela serão colocados (padrão: `seed`).
 
 #### Exibir Ajuda
 

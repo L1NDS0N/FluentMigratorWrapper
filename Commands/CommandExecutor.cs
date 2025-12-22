@@ -49,6 +49,8 @@ namespace FluentMigratorWrapper.Commands
             var schema = "dbo";
             var singleFileFlag = false;
             var includeDataFlag = false;
+            var separateDataFlag = false;
+            var seedFolder = "seed";
             var tablesList = new System.Collections.Generic.List<string>();
 
             for (int i = 0; i < args.Length; i++)
@@ -64,11 +66,14 @@ namespace FluentMigratorWrapper.Commands
                 else if (a == "-t" && i + 1 < args.Length) tablesList.AddRange(args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries));
                 else if (a == "--single-file") singleFileFlag = true;
                 else if (a == "--include-data") includeDataFlag = true;
+                else if (a == "--separate-files" || a == "-sd") separateDataFlag = true;
+                else if (a.StartsWith("--seed-folder=")) seedFolder = a.Substring("--seed-folder=".Length);
+                else if (a == "--seed-folder" && i + 1 < args.Length) seedFolder = args[++i];
             }
 
             try
             {
-                ScaffoldCommand.ExecuteScaffoldAsync(output, ns, tablesList.ToArray(), schema, singleFileFlag, includeDataFlag, config).GetAwaiter().GetResult();
+                ScaffoldCommand.ExecuteScaffoldAsync(output, ns, tablesList.ToArray(), schema, singleFileFlag, includeDataFlag, separateDataFlag, seedFolder, config).GetAwaiter().GetResult();
                 return 0;
             }
             catch (Exception ex)
@@ -91,6 +96,8 @@ namespace FluentMigratorWrapper.Commands
                 var schema = "dbo";
                 var singleFileFlag = false;
                 var includeDataFlag = false;
+                var separateDataFlag = false;
+                var seedFolder = "seed";
                 var tablesList = new System.Collections.Generic.List<string>();
 
                 for (int i = 0; i < args.Length; i++)
@@ -106,12 +113,15 @@ namespace FluentMigratorWrapper.Commands
                     else if (a == "-t" && i + 1 < args.Length) tablesList.AddRange(args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries));
                     else if (a == "--single-file") singleFileFlag = true;
                     else if (a == "--include-data") includeDataFlag = true;
+                    else if (a == "--separate-files" || a == "-sd") separateDataFlag = true;
+                    else if (a.StartsWith("--seed-folder=")) seedFolder = a.Substring("--seed-folder=".Length);
+                    else if (a == "--seed-folder" && i + 1 < args.Length) seedFolder = args[++i];
                 }
 
                 // Call scaffold
                 try
                 {
-                    ScaffoldCommand.ExecuteScaffoldAsync(output, ns, tablesList.ToArray(), schema, singleFileFlag, includeDataFlag, config).GetAwaiter().GetResult();
+                    ScaffoldCommand.ExecuteScaffoldAsync(output, ns, tablesList.ToArray(), schema, singleFileFlag, includeDataFlag, separateDataFlag, seedFolder, config).GetAwaiter().GetResult();
                     return 0;
                 }
                 catch (Exception ex)

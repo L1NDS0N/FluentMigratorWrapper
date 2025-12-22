@@ -279,4 +279,23 @@ public class SqlServerIntrospector : IDatabaseIntrospector
 
         return dataTable;
     }
+
+    public async IAsyncEnumerable<object[]> StreamTableDataAsync(string schema, string tableName)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var sql = $"SELECT * FROM [{schema}].[{tableName}]";
+        await using var cmd = new SqlCommand(sql, connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        var fieldCount = reader.FieldCount;
+
+        while (await reader.ReadAsync())
+        {
+            var values = new object[fieldCount];
+            reader.GetValues(values);
+            yield return values;
+        }
+    }
 }
