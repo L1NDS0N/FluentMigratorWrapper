@@ -66,6 +66,29 @@ public class FluentMigratorCodeGenerator : IMigrationGenerator
         sb.AppendLine();
         sb.AppendLine("    public override void Down()");
         sb.AppendLine("    {");
+        sb.AppendLine("        // Drop Indexes");
+        foreach (var index in table.Indexes.Where(i => !i.IsPrimaryKey))
+        {
+            sb.AppendLine($"        Delete.Index(\"{index.Name}\").OnTable(\"{table.Name}\");");
+        }
+
+        if (table.Indexes.Any(i => !i.IsPrimaryKey))
+        {
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("        // Drop Foreign Keys");
+        foreach (var fk in table.ForeignKeys)
+        {
+            sb.AppendLine($"        Delete.ForeignKey(\"{fk.Name}\").OnTable(\"{table.Name}\");");
+        }
+
+        if (table.ForeignKeys.Any())
+        {
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("        // Drop Table");
         sb.AppendLine($"        Delete.Table(\"{table.Name}\");");
         sb.AppendLine("    }");
         sb.AppendLine("}");
@@ -128,7 +151,34 @@ public class FluentMigratorCodeGenerator : IMigrationGenerator
         sb.AppendLine("    public override void Down()");
         sb.AppendLine("    {");
 
-        // Drop tables em ordem reversa
+        // Primeiro: Drop de índices (em ordem reversa)
+        sb.AppendLine("        // Drop Indexes");
+        for (int i = dbInfo.Tables.Count - 1; i >= 0; i--)
+        {
+            var table = dbInfo.Tables[i];
+            foreach (var index in table.Indexes.Where(idx => !idx.IsPrimaryKey))
+            {
+                sb.AppendLine($"        Delete.Index(\"{index.Name}\").OnTable(\"{table.Name}\");");
+            }
+        }
+
+        sb.AppendLine();
+
+        // Segundo: Drop de Foreign Keys (em ordem reversa)
+        sb.AppendLine("        // Drop Foreign Keys");
+        for (int i = dbInfo.Tables.Count - 1; i >= 0; i--)
+        {
+            var table = dbInfo.Tables[i];
+            foreach (var fk in table.ForeignKeys)
+            {
+                sb.AppendLine($"        Delete.ForeignKey(\"{fk.Name}\").OnTable(\"{table.Name}\");");
+            }
+        }
+
+        sb.AppendLine();
+
+        // Terceiro: Drop de tabelas em ordem reversa
+        sb.AppendLine("        // Drop Tables");
         for (int i = dbInfo.Tables.Count - 1; i >= 0; i--)
         {
             sb.AppendLine($"        Delete.Table(\"{dbInfo.Tables[i].Name}\");");

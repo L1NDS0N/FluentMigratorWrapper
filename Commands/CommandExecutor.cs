@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.IO;
 using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,7 @@ namespace FluentMigratorWrapper.Commands
             Console.WriteLine(MessageTranslator.Translate(language, "help_list"));
             Console.WriteLine(MessageTranslator.Translate(language, "help_validate"));
             Console.WriteLine(MessageTranslator.Translate(language, "help_scaffold"));
+            Console.WriteLine(MessageTranslator.Translate(language, "help_new"));
             Console.WriteLine();
             Console.WriteLine(MessageTranslator.Translate(language, "help_options"));
             Console.WriteLine(MessageTranslator.Translate(language, "help_config"));
@@ -118,6 +120,103 @@ namespace FluentMigratorWrapper.Commands
                     Console.WriteLine(MessageTranslator.Translate(language, "error", ex.Message));
                     Console.ResetColor();
                     return 1;
+                }
+            }
+
+            // Handle "new migration" command to create a migration template file
+            if (command == "new")
+            {
+                if (args.Length > 0 && args[0].ToLower() == "migration")
+                {
+                    // Default values
+                    var output = config.MigrationsFolder ?? "Migrations";
+                    var ns = config.Namespace ?? "Migrations";
+                    string name = "NewMigration";
+
+                    // Parse options from args after the 'migration' token
+                    for (int i = 1; i < args.Length; i++)
+                    {
+                        var a = args[i];
+                        if (a.StartsWith("--name=")) name = a.Substring("--name=".Length);
+                        else if (a == "-n" && i + 1 < args.Length) name = args[++i];
+                        else if (a.StartsWith("--output=")) output = a.Substring("--output=".Length);
+                        else if (a == "-o" && i + 1 < args.Length) output = args[++i];
+                        else if (a.StartsWith("--namespace=")) ns = a.Substring("--namespace=".Length);
+                        else if (a == "-ns" && i + 1 < args.Length) ns = args[++i];
+                        else if (!a.StartsWith("-") && name == null)
+                        {
+                            // positional name
+                            name = a;
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(MessageTranslator.Translate(language, "newmigration_name_required"));
+                        Console.ResetColor();
+                        return 1;
+                    }
+
+                    // Ensure output directory exists
+                    Directory.CreateDirectory(output);
+
+                    // Create timestamp version
+                    var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+
+                    // Sanitize class name to be a valid C# identifier (PascalCase)
+                    string Sanitize(string s)
+                    {
+                        if (string.IsNullOrWhiteSpace(s)) return "NewMigration";
+                        var parts = s.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+                        var cls = string.Concat(parts.Select(p => char.ToUpperInvariant(p[0]) + (p.Length > 1 ? p.Substring(1) : "")));
+                        // Remove any non-alphanumeric characters
+                        var cleaned = new string(cls.Where(c => char.IsLetterOrDigit(c)).ToArray());
+                        if (string.IsNullOrEmpty(cleaned) || char.IsDigit(cleaned[0])) cleaned = "Migration" + cleaned;
+                        return cleaned;
+                    }
+
+                    var className = Sanitize(name);
+                    var fileName = $"{timestamp}_{className}.cs";
+                    var filePath = Path.Combine(output, fileName);
+
+                    // Build file content
+                    var code = $@"using FluentMigrator;
+using System;
+
+namespace {ns}
+{{
+    [Migration({timestamp})]
+    public class {className} : Migration
+    {{
+        public override void Up()
+        {{
+            // TODO: implement migration Up
+        }}
+
+        public override void Down()
+        {{
+            // TODO: implement migration Down
+        }}
+    }}
+}}
+";
+
+                    try
+                    {
+                        File.WriteAllText(filePath, code);
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine(MessageTranslator.Translate(language, "newmigration_created", filePath));
+                        Console.ResetColor();
+                        return 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(MessageTranslator.Translate(language, "error", ex.Message));
+                        Console.ResetColor();
+                        return 1;
+                    }
                 }
             }
 
@@ -242,6 +341,7 @@ namespace FluentMigratorWrapper.Commands
                         Console.WriteLine(MessageTranslator.Translate(language, "help_list"));
                         Console.WriteLine(MessageTranslator.Translate(language, "help_validate"));
                         Console.WriteLine(MessageTranslator.Translate(language, "help_scaffold"));
+                        Console.WriteLine(MessageTranslator.Translate(language, "help_new"));
                         Console.WriteLine();
                         Console.WriteLine(MessageTranslator.Translate(language, "help_options"));
                         Console.WriteLine(MessageTranslator.Translate(language, "help_config"));

@@ -152,6 +152,21 @@ fm-wrapper scaffold --tables Users Products --schema dbo
 fm-wrapper scaffold --single-file --include-data
 ```
 
+#### Create New Migration (template)
+
+Generate a new migration file template with timestamp and skeleton `Up`/`Down` methods.
+
+```powershell
+fm-wrapper new migration CreateUsersTable
+fm-wrapper new migration --name CreateUsersTable --output ./Migrations --namespace "MyApp.Migrations"
+```
+
+Options:
+- `--name, -n` — Migration class name (positional name is also accepted)
+- `--output, -o` — Output directory (default: `Migrations`)
+- `--namespace` — Namespace for the generated migration (default: `Migrations`)
+
+
 **Scaffold Options:**
 
 - `--output, -o` — Output directory (default: `Migrations`)

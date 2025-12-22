@@ -136,6 +136,12 @@ namespace FluentMigratorWrapper
             { (Language.EN, "init_step3"), "   3. Execute: fm-wrapper migrate" },
             { (Language.PT_BR, "init_step3"), "   3. Execute: fm-wrapper migrate" },
 
+            { (Language.EN, "newmigration_name_required"), "❌ Please provide a migration name: fm-wrapper new migration MyMigration" },
+            { (Language.PT_BR, "newmigration_name_required"), "❌ Forneça um nome para a migration: fm-wrapper new migration MinhaMigration" },
+
+            { (Language.EN, "newmigration_created"), "✅ Migration created: {0}" },
+            { (Language.PT_BR, "newmigration_created"), "✅ Migration criada: {0}" },
+
             { (Language.EN, "connectionstring_empty"), "❌ connectionString not configured!" },
             { (Language.PT_BR, "connectionstring_empty"), "❌ connectionString não configurada!" },
 
@@ -174,6 +180,9 @@ namespace FluentMigratorWrapper
 
             { (Language.EN, "help_scaffold"), "  scaffold              Generate migrations from database" },
             { (Language.PT_BR, "help_scaffold"), "  scaffold              Gera migrations a partir do banco de dados" },
+
+            { (Language.EN, "help_new"), "  new migration [NAME]   Create a new migration template" },
+            { (Language.PT_BR, "help_new"), "  new migration [NOME]   Cria um template de migration" },
 
             { (Language.EN, "help_options"), "OPTIONS:" },
             { (Language.PT_BR, "help_options"), "OPÇÕES:" },

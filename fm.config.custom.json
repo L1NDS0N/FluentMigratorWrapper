@@ -1,0 +1,19 @@
+{
+    "verbose":  {
+                    "IsPresent":  false
+                },
+    "migrationsFolder":  "Migrations",
+    "showSql":  true,
+    "buildConfiguration":  "Debug",
+    "autoBuild":  true,
+    "connectionString":  "Server=(localdb)\\\\mssqllocaldb;Database=FluentMigratorTestDb;Integrated Security=true;",
+    "namespace":  "FluentMigratorWrapper.Migrations",
+    "defaultSchema":  "dbo",
+    "transactionMode":  "Session",
+    "showElapsedTime":  true,
+    "provider":  "SqlServer",
+    "nestedNamespaces":  false,
+    "allowBreakingChange":  false,
+    "language":  "PT-BR",
+    "commandTimeout":  30
+}

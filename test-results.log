@@ -1,0 +1,165 @@
+[2025-12-22 09:32:38] [START] Starting test suite
+[2025-12-22 09:32:38] [INFO] ----
+[2025-12-22 09:32:38] [TEST] TEST: Help - help
+[2025-12-22 09:32:38] [TEST] DESC: Show help
+[2025-12-22 09:32:38] [CMD] EXEC: fm-wrapper help
+[2025-12-22 09:32:38] [RESULT] RESULT: PASS
+[2025-12-22 09:32:38] [INFO] ----
+[2025-12-22 09:32:38] [TEST] TEST: Help - --help
+[2025-12-22 09:32:38] [TEST] DESC: Show help --help
+[2025-12-22 09:32:38] [CMD] EXEC: fm-wrapper --help
+[2025-12-22 09:32:38] [RESULT] RESULT: PASS
+[2025-12-22 09:32:38] [INFO] ----
+[2025-12-22 09:32:38] [TEST] TEST: Help - -h
+[2025-12-22 09:32:38] [TEST] DESC: Show help -h
+[2025-12-22 09:32:38] [CMD] EXEC: fm-wrapper -h
+[2025-12-22 09:32:38] [RESULT] RESULT: PASS
+[2025-12-22 09:32:38] [INFO] ----
+[2025-12-22 09:32:38] [TEST] TEST: Init - create
+[2025-12-22 09:32:38] [TEST] DESC: Create default config
+[2025-12-22 09:32:38] [CMD] EXEC: fm-wrapper init
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] Copied custom config to fm.config.custom.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: Config - custom
+[2025-12-22 09:32:39] [TEST] DESC: Use custom config
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper --config=fm.config.custom.json help
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: Config - EN
+[2025-12-22 09:32:39] [TEST] DESC: Help in English
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper help
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: List - all
+[2025-12-22 09:32:39] [TEST] DESC: List migrations
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper list
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: List - preview
+[2025-12-22 09:32:39] [TEST] DESC: List preview
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper list --preview
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: Migrate - preview
+[2025-12-22 09:32:39] [TEST] DESC: Migrate preview
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper migrate --preview
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: Migrate - verbose
+[2025-12-22 09:32:39] [TEST] DESC: Migrate verbose
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper migrate --preview
+[2025-12-22 09:32:39] [RESULT] RESULT: PASS
+[2025-12-22 09:32:39] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:39] [INFO] ----
+[2025-12-22 09:32:39] [TEST] TEST: Migrate - no build
+[2025-12-22 09:32:39] [TEST] DESC: Migrate without building
+[2025-12-22 09:32:39] [CMD] EXEC: fm-wrapper migrate --preview
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: MigrateUp - 1
+[2025-12-22 09:32:40] [TEST] DESC: Migrate up 1
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper migrate:up --preview
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: MigrateUp - 2
+[2025-12-22 09:32:40] [TEST] DESC: Migrate up 2
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper migrate:up 2 --preview
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: MigrateDown - 1
+[2025-12-22 09:32:40] [TEST] DESC: Migrate down 1
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper migrate:down --preview
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: MigrateDown - 2
+[2025-12-22 09:32:40] [TEST] DESC: Migrate down 2
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper migrate:down 2 --preview
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: Rollback - no args
+[2025-12-22 09:32:40] [TEST] DESC: Rollback without args should fail
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper rollback
+[2025-12-22 09:32:40] [RESULT] RESULT: PASS
+[2025-12-22 09:32:40] [INFO] ----
+[2025-12-22 09:32:40] [TEST] TEST: Rollback - invalid
+[2025-12-22 09:32:40] [TEST] DESC: Rollback invalid version should fail
+[2025-12-22 09:32:40] [CMD] EXEC: fm-wrapper rollback abc
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: RollbackAll - doc
+[2025-12-22 09:32:41] [TEST] DESC: rollback:all documented
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper help
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: Validate - integrity
+[2025-12-22 09:32:41] [TEST] DESC: Validate migrations
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper validate
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: Scaffold - doc
+[2025-12-22 09:32:41] [TEST] DESC: scaffold documented
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper help
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:41] [INFO] Copied custom config to fm.config.custom.json
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: Global --config list
+[2025-12-22 09:32:41] [TEST] DESC: Custom config list
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper --config=fm.config.custom.json list
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: Global --preview migrate
+[2025-12-22 09:32:41] [TEST] DESC: Preview option
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper migrate --preview
+[2025-12-22 09:32:41] [RESULT] RESULT: PASS
+[2025-12-22 09:32:41] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:41] [INFO] ----
+[2025-12-22 09:32:41] [TEST] TEST: Advanced - transaction
+[2025-12-22 09:32:41] [TEST] DESC: Transaction mode
+[2025-12-22 09:32:41] [CMD] EXEC: fm-wrapper list
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Unknown command
+[2025-12-22 09:32:42] [TEST] DESC: Unknown command should fail
+[2025-12-22 09:32:42] [CMD] EXEC: fm-wrapper unknown-command
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Missing config
+[2025-12-22 09:32:42] [TEST] DESC: Missing config should fail
+[2025-12-22 09:32:42] [CMD] EXEC: Remove-Item fm.config.json -Force -ErrorAction SilentlyContinue; fm-wrapper list
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Invalid JSON config
+[2025-12-22 09:32:42] [TEST] DESC: Invalid JSON
+[2025-12-22 09:32:42] [CMD] EXEC: Set-Content 'fm.config.json' -Value '{invalid json'; fm-wrapper list
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Flow Init
+[2025-12-22 09:32:42] [TEST] DESC: Init flow
+[2025-12-22 09:32:42] [CMD] EXEC: Remove-Item fm.config.json -Force -ErrorAction SilentlyContinue; fm-wrapper init
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [SETUP] Created config fm.config.json
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Flow List
+[2025-12-22 09:32:42] [TEST] DESC: List after init
+[2025-12-22 09:32:42] [CMD] EXEC: fm-wrapper list
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [INFO] ----
+[2025-12-22 09:32:42] [TEST] TEST: Flow Validate
+[2025-12-22 09:32:42] [TEST] DESC: Validate after list
+[2025-12-22 09:32:42] [CMD] EXEC: fm-wrapper validate
+[2025-12-22 09:32:42] [RESULT] RESULT: PASS
+[2025-12-22 09:32:42] [SUMMARY] Summary: Total=29 Passed=29 Failed=0
