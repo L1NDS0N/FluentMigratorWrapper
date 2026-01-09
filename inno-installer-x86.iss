@@ -1,17 +1,16 @@
 [Setup]
-AppName=FluentMigratorWrapper
+AppName=FluentMigratorWrapper (x86)
 AppVersion=1.0.0
 DefaultDirName={autopf}\FluentMigratorWrapper
 DefaultGroupName=FluentMigratorWrapper
-UninstallDisplayIcon={app}\FluentMigratorWrapper.exe
+OutputDir=.\publish
+OutputBaseFilename=FluentMigratorWrapper_x86_Setup
 Compression=lzma
 SolidCompression=yes
-OutputDir=.\publish
-OutputBaseFilename=FluentMigratorWrapper_x64_Setup
-ArchitecturesInstallIn64BitMode=x64
+ChangesEnvironment=yes
 
 [Files]
-Source: "{#SourcePath}\publish\x64\fm-wrapper.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\publish\x86\fm-wrapper.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -29,6 +28,5 @@ begin
     Result := True;
     exit;
   end;
-  { Verifica se a pasta já não está no PATH para não duplicar }
   Result := Pos(Uppercase(Param), Uppercase(OrigPath)) = 0;
 end;
